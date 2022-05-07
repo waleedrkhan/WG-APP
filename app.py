@@ -1,9 +1,12 @@
 from flask import Flask, request
 from mailchimp_transactional.api_client import ApiClientError
 import mailchimp_transactional as MailchimpTransactional
+import json
+from flask_caching import Cache
+
 
 app = Flask(__name__)
-
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 api_key = 'YpncKdxeRDTYtugALhMJ-Q'
 mailchimp = MailchimpTransactional.Client(api_key=api_key)
@@ -25,7 +28,7 @@ def add_webhook():
     try:
         client = MailchimpTransactional.Client(api_key=api_key)
         response = client.webhooks.add(
-            {"url": "https://517b3256e3050b.lhrtunnel.link", "description": "My Example Webhook",
+            {"url": "https://d8ddf1e7f0cc37.lhrtunnel.link", "description": "My Example Webhook",
              "events": [
                  "send",
                  "open",
@@ -41,9 +44,14 @@ def add_webhook():
     return "<p>Hook added successfully</p>"
 
 
-@app.route("/", methods = ['POST'])
+@app.route("/", methods=['POST'])
 def mandrill_response():
     print("got a response from mandrill")
+    try:
+        data = json.loads(request.form['mandrill_events'])[0]
+        cache.set(data.get("_id"), data)
+    except:
+        pass
     return "<p>Response</p>"
 
 
