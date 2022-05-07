@@ -1,12 +1,9 @@
-from flask import Flask
+from flask import Flask, request
 from mailchimp_transactional.api_client import ApiClientError
 import mailchimp_transactional as MailchimpTransactional
 
-from flask_ngrok import run_with_ngrok
-
-
 app = Flask(__name__)
-# run_with_ngrok(app)
+
 
 api_key = 'YpncKdxeRDTYtugALhMJ-Q'
 mailchimp = MailchimpTransactional.Client(api_key=api_key)
@@ -27,15 +24,16 @@ message = {
 def add_webhook():
     try:
         client = MailchimpTransactional.Client(api_key=api_key)
-        response = client.webhooks.add({"url": "https://c0e1-111-119-187-8.in.ngrok.io/", "description": "My Example Webhook",
-    "events": [
-        "send",
-        "open",
-        "click",
-        "hard_bounce",
-        "spam",
-        "reject"
-    ]})
+        response = client.webhooks.add(
+            {"url": "https://517b3256e3050b.lhrtunnel.link", "description": "My Example Webhook",
+             "events": [
+                 "send",
+                 "open",
+                 "click",
+                 "hard_bounce",
+                 "spam",
+                 "reject"
+             ]})
         print(response)
     except ApiClientError as error:
         print("An exception occurred: {}".format(error.text))
@@ -43,7 +41,7 @@ def add_webhook():
     return "<p>Hook added successfully</p>"
 
 
-@app.route("/")
+@app.route("/", methods = ['POST'])
 def mandrill_response():
     print("got a response from mandrill")
     return "<p>Response</p>"
@@ -58,7 +56,7 @@ def send_mail():
         print('An exception occurred: {}'.format(error.text))
         return "<p>Failed with error : {}</p>".format(error.text)
     return "<p>Success</p>"
-# send_mail()
+
 
 if __name__ == '__main__':
     app.run()
