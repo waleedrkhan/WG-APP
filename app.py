@@ -1,12 +1,13 @@
-from flask import Flask, request
+from flask import Flask, request, render_template
 from mailchimp_transactional.api_client import ApiClientError
 import mailchimp_transactional as MailchimpTransactional
 import json
 from flask_caching import Cache
-
+from flask_socketio import SocketIO, send, emit
 
 app = Flask(__name__)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
+socketio = SocketIO(app)
 
 api_key = 'YpncKdxeRDTYtugALhMJ-Q'
 mailchimp = MailchimpTransactional.Client(api_key=api_key)
@@ -28,7 +29,7 @@ def add_webhook():
     try:
         client = MailchimpTransactional.Client(api_key=api_key)
         response = client.webhooks.add(
-            {"url": "https://d8ddf1e7f0cc37.lhrtunnel.link", "description": "My Example Webhook",
+            {"url": "https://7c5328ba6f6597.lhrtunnel.link", "description": "My Example Webhook",
              "events": [
                  "send",
                  "open",
@@ -45,14 +46,22 @@ def add_webhook():
 
 
 @app.route("/", methods=['POST'])
+@socketio.on('message')
 def mandrill_response():
     print("got a response from mandrill")
     try:
         data = json.loads(request.form['mandrill_events'])[0]
         cache.set(data.get("_id"), data)
-    except:
+        socketio.emit('my_socket_event', data)
+    except Exception as e:
         pass
-    return "<p>Response</p>"
+    return render_template('index.html')
+
+
+@socketio.on('message')
+def handle_message(data):
+    print('received message: ' + data)
+    print("is data here now")
 
 
 @app.route("/send-mail")

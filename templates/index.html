@@ -1,0 +1,13 @@
+<script>
+var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+
+socket.on('my_socket_event',function(result) {
+    console.log('[EVENT CALLED] my_socket_event')
+    for (var elem in result) {
+        let htmlFrag = "<p>" + elem + "</p>"
+        $('.container').append(htmlFrag);
+    }
+
+})
+</script>
