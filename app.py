@@ -29,7 +29,7 @@ def add_webhook():
     try:
         client = MailchimpTransactional.Client(api_key=api_key)
         response = client.webhooks.add(
-            {"url": "https://7c5328ba6f6597.lhrtunnel.link", "description": "My Example Webhook",
+            {"url": "https://3f6f52379e767e.lhrtunnel.link", "description": "My Example Webhook",
              "events": [
                  "send",
                  "open",
@@ -46,7 +46,7 @@ def add_webhook():
 
 
 @app.route("/", methods=['POST'])
-@socketio.on('message')
+@socketio.on('my_socket_event')
 def mandrill_response():
     print("got a response from mandrill")
     try:
@@ -58,7 +58,7 @@ def mandrill_response():
     return render_template('index.html')
 
 
-@socketio.on('message')
+@socketio.on('connect')
 def handle_message(data):
     print('received message: ' + data)
     print("is data here now")
