@@ -4,20 +4,25 @@ import mailchimp_transactional as MailchimpTransactional
 import json
 from flask_caching import Cache
 from flask_socketio import SocketIO, send, emit
+from werkzeug.utils import redirect
+import configparser
+
+parser = configparser.ConfigParser()
+parser.read("conf.cfg")
 
 app = Flask(__name__)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 socketio = SocketIO(app)
 
-api_key = 'YpncKdxeRDTYtugALhMJ-Q'
+api_key = parser.get('app-cfg', 'apiKey')
 mailchimp = MailchimpTransactional.Client(api_key=api_key)
 message = {
-    "from_email": "no-reply-waleed@mailchimp.com",
-    "subject": "Test App Mails",
+    "from_email": parser.get('app-cfg', 'fromEmail'),
+    "subject": parser.get('app-cfg', 'subject'),
     "text": "These mails are specially for interview application.",
     "to": [
         {
-            "email": "waleedrkhan90@gmail.com",
+            "email": parser.get('app-cfg', 'toEmail'),
             "type": "to"
         }
     ]
@@ -29,7 +34,7 @@ def add_webhook():
     try:
         client = MailchimpTransactional.Client(api_key=api_key)
         response = client.webhooks.add(
-            {"url": "https://3f6f52379e767e.lhrtunnel.link", "description": "My Example Webhook",
+            {"url": parser.get('app-cfg', 'pathURL'), "description": "My Example Webhook",
              "events": [
                  "send",
                  "open",
@@ -39,32 +44,27 @@ def add_webhook():
                  "reject"
              ]})
         print(response)
+        send_mail()
     except ApiClientError as error:
         print("An exception occurred: {}".format(error.text))
         return "<p>Failed to add hook: {}</p>".format(error.text)
-    return "<p>Hook added successfully</p>"
+    return "<p>Hook added successfully and email sent</p>"
 
 
 @app.route("/", methods=['POST'])
-@socketio.on('my_socket_event')
+@socketio.on('my_event')
 def mandrill_response():
-    print("got a response from mandrill")
     try:
         data = json.loads(request.form['mandrill_events'])[0]
         cache.set(data.get("_id"), data)
-        socketio.emit('my_socket_event', data)
+        socketio.emit('my_event', data)
+        return redirect('index.html', data=data)
     except Exception as e:
         pass
-    return render_template('index.html')
+    return "<p>clean</p>"
 
 
-@socketio.on('connect')
-def handle_message(data):
-    print('received message: ' + data)
-    print("is data here now")
-
-
-@app.route("/send-mail")
+# @app.route("/send-mail")
 def send_mail():
     try:
         response = mailchimp.messages.send({"message": message})
